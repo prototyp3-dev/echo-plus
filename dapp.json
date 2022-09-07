@@ -1,0 +1,6 @@
+{
+  "fs": {
+    "files": ["entrypoint.sh","echo-plus.py",".env"],
+    "size": 131072
+  }
+}
