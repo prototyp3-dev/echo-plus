@@ -18,6 +18,7 @@ from eth_abi import decode_abi, encode_abi
 # from web3 import Web3
 import json
 import sys
+import sqlite3
 
 # b'Y\xda*\x98N\x16Z\xe4H|\x99\xe5\xd1\xdc\xa7\xe0L\x8a\x990\x1b\xe6\xbc\t)2\xcb]\x7f\x03Cx'
 ERC20_TRANSFER_HEADER = b'Y\xda*\x98N\x16Z\xe4H|\x99\xe5\xd1\xdc\xa7\xe0L\x8a\x990\x1b\xe6\xbc\t)2\xcb]\x7f\x03Cx'
@@ -76,13 +77,14 @@ def txHex(hex):
 
 def handle_advance(request):
     data = request["data"]
-    logger.info(f"Received advance request data {request}")
-    logger.info("Adding notice")
+    logger.info(f"Received advance request data")
+    # logger.info("Adding notice")
     status = "accept"
     payload = None
     try:
         payload = hex2str(data["payload"])
-        if payload == "except":
+        logger.info(f"Received str {payload}")
+        if payload == "exception":
             status = "reject"
             exception = {"payload": str2hex(str(payload))}
             response = requests.post(rollup_server + "/exception", json=exception)
@@ -106,11 +108,38 @@ def handle_advance(request):
             notice = {"payload": str2hex(str(payload))}
             response = requests.post(rollup_server + "/notice", json=notice)
             logger.info(f"/notice: Received extra notice status {response.status_code} body {response.content}")
-    except Exception as e:
-        payload = txHex(data["payload"])
-        if isinstance(payload, tuple):
-            handle_tx(data["metadata"]["msg_sender"],payload)
+        else:
+            try:
+                logger.info(f"Trying to decode json")
+                # try json data
+                json_data = json.loads(payload)
+                # check sql
+                if json_data.get("sql_statement"):
+                    sql_statement = json_data["sql_statement"]
+                    logger.info(f"Received sql statement ({sql_statement})")
+                    payload = f"{process_sql_statement(sql_statement)}"
+                else:
+                    raise Exception('Not supported json operation')
+            except Exception as e2:
+                status = "reject"
+                msg = f"Error executing processing json: {e2}"
+                logger.error(msg)
+                response = requests.post(rollup_server + "/report", json={"payload": str2hex(msg)})
+                logger.info(f"Received report status {response.status_code} body {response.content}")
 
+    except Exception as e:
+        try:
+            logger.info(f"Trying to decode deposit")
+            payload = txHex(data["payload"])
+            if isinstance(payload, tuple):
+                handle_tx(data["metadata"]["msg_sender"],payload)
+        except Exception as e2:
+            status = "reject"
+            msg = f"Error executing deposit: {e}"
+            logger.error(msg)
+            response = requests.post(rollup_server + "/report", json={"payload": str2hex(msg)})
+            logger.info(f"Received report status {response.status_code} body {response.content}")
+        
     if not payload:
         payload = data["payload"]
     else:
@@ -121,6 +150,15 @@ def handle_advance(request):
 
     logger.info(f"Payload is {payload}")
     return status
+
+def process_sql_statement(statement):
+    con = sqlite3.connect("data.db")
+    cur = con.cursor()
+    cur.execute(statement)
+    result = cur.fetchall()
+    con.commit()
+    con.close()
+    return result
 
 def handle_tx(sender,decoded):
     input_header = decoded[0]

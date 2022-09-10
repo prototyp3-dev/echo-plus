@@ -22,18 +22,28 @@ docker buildx bake -f docker-bake.hcl -f docker-bake.override.hcl --load
 To start the application, execute the following command:
 
 ```shell
-docker compose up
+docker compose -f docker-compose.yml -f docker-compose.override.yml up
 ```
 
 The application can afterwards be shut down with the following command:
 
 ```shell
-docker compose down -v
+docker compose -f docker-compose.yml -f docker-compose.override.yml down -v
 ```
 
 ## Interacting with the application
 
 We can use the frontend web [frontend-web](https://github.com/lynoferraz/frontend-web-cartesi) application to interact with the DApp.
+
+The DApp works as an echo dapp, but it answers some special commands such as:
+1. deposits (it sends vouchers to depositor with the same assets)
+2. json 
+    You can send sql statements - e.g.: 
+    ```{"sql_statement":"create table developers (name string, company string, age integer);"}```
+    ```{"sql_statement":"insert into developers (name, company, age) values('John', 'abc company', 50);"}```
+    ```{"sql_statement":"select * from developers;"}```
+3. strings (it performs some operations depending on the string: reject, report, exception, ...)
+
 
 ## Deploying to a testnet
 
@@ -117,6 +127,16 @@ yarn start notice list
 ## Running the back-end in host mode
 
 When developing an application, it is often important to easily test and debug it. For that matter, it is possible to run the Cartesi Rollups environment in [host mode](https://github.com/cartesi/rollups-examples/tree/main/README.md#host-mode), so that the DApp's back-end can be executed directly on the host machine, allowing it to be debugged using regular development tools such as an IDE.
+
+To start the application, execute the following command:
+```
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose-host.yml up
+```
+
+The application can afterwards be shut down with the following command:
+```
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose-host.yml down -v
+```
 
 This DApp's back-end is written in Python, so to run it in your machine you need to have `python3` installed.
 
