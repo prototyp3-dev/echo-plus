@@ -12,4 +12,10 @@
 # specific language governing permissions and limitations under the License.
 
 set -e
+
+echo 'ln -s $1 $2/$(echo $1 | sed "s/.*\/lib\/\(lib.*.so\).*/\1/") ;' > linklib.sh
+
+mkdir -p  /mnt/dapp/.env/cross/lib/python3.10/site-packages/shapely/.libs
+find /mnt/dapp/3rdparty/ -name "lib*.so*" -type f -exec sh linklib.sh {} "/usr/lib/python3.10/lib-dynload/" \;
+
 PYTHONPATH=/mnt/dapp/.env/cross/lib/python3.10/site-packages rollup-init python3 echo-plus.py

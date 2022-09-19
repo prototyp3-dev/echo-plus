@@ -38,6 +38,8 @@ We can use the frontend web [frontend-web](https://github.com/lynoferraz/fronten
 The DApp works as an echo dapp, but it answers some special commands such as:
 1. deposits (it sends vouchers to depositor with the same assets)
 2. json 
+    You can check if lat long lies within a fence - e.g.: 
+    ```{"latitude":34.639,"longitude":-118.051,"fence":"{\"type\":\"Polygon\",\"coordinates\":[[[-118.053,34.6403],[-118.050492679131423,34.637611825591407],[-118.04191282470596,34.642500320185789],[-118.044382904834507,34.645229032100403],[-118.053002827442867,34.640396678176792]]]}"}```
     You can send sql statements - e.g.: 
     ```{"sql_statement":"create table developers (name string, company string, age integer);"}```
     ```{"sql_statement":"insert into developers (name, company, age) values('John', 'abc company', 50);"}```

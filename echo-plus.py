@@ -18,7 +18,10 @@ from eth_abi import decode_abi, encode_abi
 # from web3 import Web3
 import json
 import sys
+from shapely.geometry import shape, Point
+# from libs import picket
 import sqlite3
+import traceback
 
 # b'Y\xda*\x98N\x16Z\xe4H|\x99\xe5\xd1\xdc\xa7\xe0L\x8a\x990\x1b\xe6\xbc\t)2\xcb]\x7f\x03Cx'
 ERC20_TRANSFER_HEADER = b'Y\xda*\x98N\x16Z\xe4H|\x99\xe5\xd1\xdc\xa7\xe0L\x8a\x990\x1b\xe6\xbc\t)2\xcb]\x7f\x03Cx'
@@ -113,19 +116,26 @@ def handle_advance(request):
                 logger.info(f"Trying to decode json")
                 # try json data
                 json_data = json.loads(payload)
+                # check geo data
+                if json_data.get("fence") and json_data.get("latitude") and json_data.get("longitude"):
+                    latitude = json_data["latitude"]
+                    longitude = json_data["longitude"]
+                    # logger.info(f"Received geo request lat,long({latitude},{longitude})")
+                    # payload = f"{check_point_in_fence(latitude, longitude)}"
+                    fence = json_data["fence"]
+                    logger.info(f"Received geo request fence ({fence}) lat,long({latitude},{longitude})")
+                    payload = f"{check_point_in_fence(fence, latitude, longitude)}"
                 # check sql
-                if json_data.get("sql_statement"):
+                elif json_data.get("sql_statement"):
                     sql_statement = json_data["sql_statement"]
                     logger.info(f"Received sql statement ({sql_statement})")
                     payload = f"{process_sql_statement(sql_statement)}"
                 else:
                     raise Exception('Not supported json operation')
             except Exception as e2:
-                status = "reject"
-                msg = f"Error executing processing json: {e2}"
-                logger.error(msg)
-                response = requests.post(rollup_server + "/report", json={"payload": str2hex(msg)})
-                logger.info(f"Received report status {response.status_code} body {response.content}")
+                msg = f"Not valid json: {e2}"
+                traceback.print_exc()
+                logger.info(msg)
 
     except Exception as e:
         try:
@@ -150,6 +160,51 @@ def handle_advance(request):
 
     logger.info(f"Payload is {payload}")
     return status
+
+def check_point_in_fence(fence, latitude, longitude):
+    # shapely
+    fence = json.loads(fence)
+    y = shape(fence)
+    x = Point(longitude, latitude)
+    return y.contains(x)
+
+# def create_fence(coordinates):
+#     fence = picket.Fence()
+#     for each_pair in coordinates:
+#         logger.info(f"pair {each_pair}")
+#         fence.add_point((each_pair[0], each_pair[1]))
+#     return fence
+
+# def check_point_in_fence(fence, latitude, longitude):
+#     f = open('fence.geojson')
+#     data = json.load(f)
+#     for zone in data['features']:
+#         if zone['properties']['ZONE_TYPE'] != "Runway Protection Zone":
+#             continue
+#         if check_point_in_zone(zone['geometry']['coordinates'], latitude, longitude):
+#             return True
+#     return False
+
+# def check_point_in_zone(gps_data, latitude, longitude):
+#     if type(gps_data[0][0]) in (float, int):
+#         if len(gps_data) < 3:
+#             return False
+#         fence = create_fence(gps_data)
+#         if fence.check_point((latitude, longitude)):
+#             return True
+#         return False
+#     for inner_zone in gps_data:
+#         is_in_zone = check_point_in_zone(inner_zone, latitude, longitude)
+#         if is_in_zone:
+#             return True
+#     return False
+
+# def check_point_in_fence(fence, latitude, longitude):
+#     fence = json.loads(fence)
+#     fence = create_fence(fence['coordinates'][0])
+#     if fence.check_point((latitude, longitude)):
+#         return True
+#     return False
 
 def process_sql_statement(statement):
     con = sqlite3.connect("data.db")

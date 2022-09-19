@@ -1,6 +1,6 @@
 {
   "fs": {
-    "files": ["entrypoint.sh","echo-plus.py",".env"],
-    "size": 131072
+    "files": ["entrypoint.sh","echo-plus.py",".env","3rdparty"],
+    "size": 524288
   }
 }
