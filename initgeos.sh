@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Copyright 2022 Cartesi Pte. Ltd.
 #
 # SPDX-License-Identifier: Apache-2.0
@@ -11,19 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-set -e
+echo '( ln -s $1 $(echo $1 | sed "s/\(.*\/lib\/\)\(lib.*.so\).*/\1\2/") ) || true;' > linklib.sh
+find /mnt/dapp/3rdparty/geos -name "lib*.so*" -type f -exec sh linklib.sh {} \;
 
-MACHINE_DIR=$1
-ROLLUP_HTTP_SERVER_PORT=5004
-
-cartesi-machine \
-    --ram-length=128Mi \
-    --rollup \
-    --flash-drive=label:dapp,filename:dapp.ext2 \
-    --flash-drive=label:root,filename:rootfs.ext2 \
-    --ram-image=linux-5.5.19-ctsi-6.bin \
-    --rom-image=rom.bin \
-    --store=$MACHINE_DIR \
-    -- "cd /mnt/dapp; \
-        ROLLUP_HTTP_SERVER_URL=\"http://127.0.0.1:$ROLLUP_HTTP_SERVER_PORT\" \
-        ./entrypoint.sh"
+sed -i "s/load_dll('c')/load_dll('c',fallbacks=['libc.so','libc.so.6'])/" /mnt/dapp/.env/cross/lib/python3.10/site-packages/shapely/geos.py

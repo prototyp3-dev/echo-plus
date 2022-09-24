@@ -12,4 +12,7 @@
 # specific language governing permissions and limitations under the License.
 
 set -e
-PYTHONPATH=/mnt/dapp/.env/cross/lib/python3.10/site-packages rollup-init python3 echo-plus.py
+
+sh /mnt/dapp/initgeos.sh
+
+PYTHONPATH=/mnt/dapp/.env/cross/lib/python3.10/site-packages rollup-init /mnt/dapp/pythonentry.sh
