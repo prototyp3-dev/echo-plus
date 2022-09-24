@@ -11,8 +11,6 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-set -e
+export LD_LIBRARY_PATH=/mnt/dapp/3rdparty/geos/lib:/lib 
 
-sh /mnt/dapp/initgeos.sh
-
-PYTHONPATH=/mnt/dapp/.env/cross/lib/python3.10/site-packages rollup-init /mnt/dapp/pythonentry.sh
+python3 /mnt/dapp/echo-plus.py

@@ -3,7 +3,7 @@
 export TARGET=riscv64-cartesi-linux-gnu
 # export TARGET_DIR=/opt/riscv/riscv64-cartesi-linux-gnu/riscv64-cartesi-linux-gnu
 export TARGET_DIR=/opt/riscv/rootfs/buildroot/work/staging/usr
-export ROOT_DIR=${PWD} #/opt/cartesi/dapp
+export ROOT_DIR=${PWD}/3rdparty #/opt/cartesi/dapp
 export PYTHON_DIR=/opt/build-python/
 
 export CC="${TARGET}-gcc"

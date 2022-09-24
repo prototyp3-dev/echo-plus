@@ -11,8 +11,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-set -e
+echo '( ln -s $1 $(echo $1 | sed "s/\(.*\/lib\/\)\(lib.*.so\).*/\1\2/") ) || true;' > linklib.sh
+find /mnt/dapp/3rdparty/geos -name "lib*.so*" -type f -exec sh linklib.sh {} \;
 
-sh /mnt/dapp/initgeos.sh
-
-PYTHONPATH=/mnt/dapp/.env/cross/lib/python3.10/site-packages rollup-init /mnt/dapp/pythonentry.sh
+sed -i "s/load_dll('c')/load_dll('c',fallbacks=['libc.so','libc.so.6'])/" /mnt/dapp/.env/cross/lib/python3.10/site-packages/shapely/geos.py

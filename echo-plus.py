@@ -168,44 +168,6 @@ def check_point_in_fence(fence, latitude, longitude):
     x = Point(longitude, latitude)
     return y.contains(x)
 
-# def create_fence(coordinates):
-#     fence = picket.Fence()
-#     for each_pair in coordinates:
-#         logger.info(f"pair {each_pair}")
-#         fence.add_point((each_pair[0], each_pair[1]))
-#     return fence
-
-# def check_point_in_fence(fence, latitude, longitude):
-#     f = open('fence.geojson')
-#     data = json.load(f)
-#     for zone in data['features']:
-#         if zone['properties']['ZONE_TYPE'] != "Runway Protection Zone":
-#             continue
-#         if check_point_in_zone(zone['geometry']['coordinates'], latitude, longitude):
-#             return True
-#     return False
-
-# def check_point_in_zone(gps_data, latitude, longitude):
-#     if type(gps_data[0][0]) in (float, int):
-#         if len(gps_data) < 3:
-#             return False
-#         fence = create_fence(gps_data)
-#         if fence.check_point((latitude, longitude)):
-#             return True
-#         return False
-#     for inner_zone in gps_data:
-#         is_in_zone = check_point_in_zone(inner_zone, latitude, longitude)
-#         if is_in_zone:
-#             return True
-#     return False
-
-# def check_point_in_fence(fence, latitude, longitude):
-#     fence = json.loads(fence)
-#     fence = create_fence(fence['coordinates'][0])
-#     if fence.check_point((latitude, longitude)):
-#         return True
-#     return False
-
 def process_sql_statement(statement):
     con = sqlite3.connect("data.db")
     cur = con.cursor()
