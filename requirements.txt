@@ -2,4 +2,5 @@ requests == 2.23.0
 eth_abi == 3.0.0
 cytoolz == 0.11.2
 Cython == 0.29.32
-#shapely == 1.5.9 --no-binary shapely
+numpy == 1.23.4
+shapely == 1.5.9 --no-binary shapely

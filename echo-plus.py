@@ -22,6 +22,7 @@ from shapely.geometry import shape, Point
 # from libs import picket
 import sqlite3
 import traceback
+import numpy as np
 
 # b'Y\xda*\x98N\x16Z\xe4H|\x99\xe5\xd1\xdc\xa7\xe0L\x8a\x990\x1b\xe6\xbc\t)2\xcb]\x7f\x03Cx'
 ERC20_TRANSFER_HEADER = b'Y\xda*\x98N\x16Z\xe4H|\x99\xe5\xd1\xdc\xa7\xe0L\x8a\x990\x1b\xe6\xbc\t)2\xcb]\x7f\x03Cx'
@@ -126,10 +127,14 @@ def handle_advance(request):
                     logger.info(f"Received geo request fence ({fence}) lat,long({latitude},{longitude})")
                     payload = f"{check_point_in_fence(fence, latitude, longitude)}"
                 # check sql
-                elif json_data.get("sql_statement"):
+                elif json_data.get("sql"):
                     sql_statement = json_data["sql_statement"]
                     logger.info(f"Received sql statement ({sql_statement})")
                     payload = f"{process_sql_statement(sql_statement)}"
+                elif json_data.get("array"):
+                    logger.info(f"Received array to sort ({json_data['array']})")
+                    a = np.array(json_data["array"])
+                    payload = f"{np.sort(a)}"
                 else:
                     raise Exception('Not supported json operation')
             except Exception as e2:
