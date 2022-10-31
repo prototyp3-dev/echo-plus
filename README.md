@@ -41,9 +41,11 @@ The DApp works as an echo dapp, but it answers some special commands such as:
     You can check if lat long lies within a fence - e.g.: 
     ```{"latitude":34.639,"longitude":-118.051,"fence":"{\"type\":\"Polygon\",\"coordinates\":[[[-118.053,34.6403],[-118.050492679131423,34.637611825591407],[-118.04191282470596,34.642500320185789],[-118.044382904834507,34.645229032100403],[-118.053002827442867,34.640396678176792]]]}"}```
     You can send sql statements - e.g.: 
-    ```{"sql_statement":"create table developers (name string, company string, age integer);"}```
-    ```{"sql_statement":"insert into developers (name, company, age) values('John', 'abc company', 50);"}```
-    ```{"sql_statement":"select * from developers;"}```
+    ```{"sql":"create table developers (name string, company string, age integer);"}```
+    ```{"sql":"insert into developers (name, company, age) values('John', 'abc company', 50);"}```
+    ```{"sql":"select * from developers;"}```
+    You can send arrays to be ordered with numpy - e.g.: 
+    ```{"array":[3,5,1,4,2]}```
 3. strings (it performs some operations depending on the string: reject, report, exception, ...)
 
 
@@ -99,7 +101,7 @@ export CHAIN_ID=5
 Then, the node itself can be started by running a docker compose as follows:
 
 ```shell
-DAPP_NAME=mydapp docker compose -f ./docker-compose-testnet.yml -f ./docker-compose.override.yml up
+DAPP_NAME=echo-plus docker compose -f ./docker-compose-testnet.yml -f ./docker-compose.override.yml up
 ```
 
 ## Interacting with the deployed application
