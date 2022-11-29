@@ -191,3 +191,5 @@ INFO:__main__:Sending finish
 ```
 
 After that, you can interact with the application normally [as explained above](#interacting-with-the-application).
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/lynoferraz/echo-plus-cartesi-dapp)
