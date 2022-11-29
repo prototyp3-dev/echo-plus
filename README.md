@@ -64,7 +64,7 @@ The DApp works as an echo dapp, but it answers some special commands such as:
     ```{"image":"iVBORw0...uQmCC"}```
     ```{"image":"iVBORw0...uQmCC","erc721_to_mint":"0xd914...9138","selector":"0xd0def521"}```
 
-    Using standard linux tools youcan convert an image to base64 with ```base64 img.png``` and convert back to with ```base64 -d <<< $(cat img_processed.png.b64) > img_processed.png```
+    Using standard linux tools you can convert an image to base64 with ```base64 img.png``` and convert back to with ```base64 -d <<< $(cat img_processed.png.b64) > img_processed.png```
 
 3. strings (it performs some operations depending on the string: report, reject, exception, ...)
 
