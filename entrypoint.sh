@@ -13,6 +13,6 @@
 
 set -e
 
-sh /mnt/dapp/initgeos.sh
+sh /mnt/dapp/initlibs.sh
 
-PYTHONPATH=/mnt/dapp/.env/cross/lib/python3.10/site-packages rollup-init /mnt/dapp/pythonentry.sh
+PYTHONPATH=/mnt/dapp/.crossenv/cross/lib/python3.10/site-packages rollup-init /mnt/dapp/pythonentry.sh
