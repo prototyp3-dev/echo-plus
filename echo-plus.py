@@ -11,18 +11,21 @@
 # specific language governing permissions and limitations under the License.
 
 from os import environ
+import sys
 import logging
 import requests
 # from web3_input_decoder import decode_constructor, decode_function
-from eth_abi import decode_abi, encode_abi
 # from web3 import Web3
-import json
-import sys
-from shapely.geometry import shape, Point
-# from libs import picket
-import sqlite3
 import traceback
+import json
+import sqlite3
+from eth_abi import decode_abi, encode_abi
+from shapely.geometry import shape, Point
 import numpy as np
+import cv2
+from Cryptodome.Hash import SHA256
+import base64
+import base58
 
 # b'Y\xda*\x98N\x16Z\xe4H|\x99\xe5\xd1\xdc\xa7\xe0L\x8a\x990\x1b\xe6\xbc\t)2\xcb]\x7f\x03Cx'
 ERC20_TRANSFER_HEADER = b'Y\xda*\x98N\x16Z\xe4H|\x99\xe5\xd1\xdc\xa7\xe0L\x8a\x990\x1b\xe6\xbc\t)2\xcb]\x7f\x03Cx'
@@ -33,8 +36,8 @@ ETHER_TRANSFER_HEADER = b'\xf2X\xe0\xfc9\xd3Z\xbd}\x83\x93\xdc\xfe~\x1c\xf8\xc7E
 
 # print(Web3.keccak(b"transfer(address,uint256)")) -> will be called as [token_address].transfer([address receiver],[uint256 amount])
 ERC20_WITHDRAWAL_HEADER = b'\xa9\x05\x9c\xbb*\xb0\x9e\xb2\x19X?JY\xa5\xd0b:\xde4m\x96+\xcdNF\xb1\x1d\xa0G\xc9\x04\x9b'
-# print(Web3.keccak(b"safeTransferFrom(address,address,uint256)")) -> will be called as [nft_address].transfer([address sender],[address receiver],[uint256 id])
-ERC721_WITHDRAWAL_HEADER = b'B\x84.\x0e\xb3\x88W\xa7w[Nsd\xb2w]\xf72Pt\xd0\x88\xe7\xfb9Y\x0c\xd6(\x11\x84\xed'
+# print(Web3.keccak(b"safeTransferFrom(address,address,uint256)")) -> will be called as [nft_address].safeTransferFrom([address sender],[address receiver],[uint256 id])
+ERC721_SAFETRANSFER_HEADER = b'B\x84.\x0e\xb3\x88W\xa7w[Nsd\xb2w]\xf72Pt\xd0\x88\xe7\xfb9Y\x0c\xd6(\x11\x84\xed'
 # print(Web3.keccak(b"etherWithdrawal(bytes)")) -> will be called as [rollups_address].etherWithdrawal(bytes) where bytes is ([address receiver],[uint256 amount])
 ETHER_WITHDRAWAL_HEADER = b't\x95k\x94\x10\x92\x96h\x8b \xfe\xd5b\xda\x90\xd9N\r\x81\xbe4\x95\x1a\xf8t\xb5\x13\x0bO\x85\xbd\xbb'
 
@@ -43,6 +46,9 @@ logger = logging.getLogger(__name__)
 
 rollup_server = environ["ROLLUP_HTTP_SERVER_URL"]
 logger.info(f"HTTP rollup_server url is {rollup_server}")
+
+###
+# Aux Functions 
 
 def hex2str(hex):
     """
@@ -56,28 +62,97 @@ def str2hex(str):
     """
     return "0x" + str.encode("utf-8").hex()
 
-def txHex(hex):
-    """
-    Decodes a transaction hex string into a regular dict
-    """
-    try:
-        decoded = [None]
-        binary = bytes.fromhex(hex[2:])
-        try:
-            # ERC20 and ERC721
-            decoded = decode_abi(['bytes32', 'address', 'address', 'uint256', 'bytes'], binary)
-        except Exception as e1:
-            try:
-                # Ether
-                decoded = decode_abi(['bytes32', 'address', 'uint256', 'bytes'], binary)
-            except Exception as e2:
-                logger.info(e1)
-                logger.info(e2)
+def send_voucher(voucher):
+    send_post("voucher",voucher)
 
-    except Exception as e:
-        logger.warning(f"could not decode tx using given abi")
-        logger.warning(e)
-    return decoded
+def send_notice(notice):
+    send_post("notice",notice)
+
+def send_report(report):
+    send_post("report",report)
+
+def send_exception(exception):
+    send_post("exception",exception)
+
+def send_post(endpoint,json_data):
+    response = requests.post(rollup_server + f"/{endpoint}", json=json_data)
+    logger.info(f"/{endpoint}: Received response status {response.status_code} body {response.content}")
+
+def check_point_in_fence(fence, latitude, longitude):
+    # shapely
+    fence = json.loads(fence)
+    y = shape(fence)
+    x = Point(longitude, latitude)
+    return y.contains(x)
+
+def process_sql_statement(statement):
+    con = sqlite3.connect("data.db")
+    cur = con.cursor()
+    cur.execute(statement)
+    result = cur.fetchall()
+    con.commit()
+    con.close()
+    return result
+
+def process_image(image):
+    b64str = image
+    png = base64.decodebytes(b64str)
+    nparr = np.frombuffer(png,np.uint8)
+    img = cv2.imdecode(nparr,cv2.IMREAD_UNCHANGED)
+    (rows, cols) = img.shape[:2]
+    M = cv2.getRotationMatrix2D((cols / 2, rows / 2), 15, 1)
+    rotated = cv2.warpAffine(img, M, (cols, rows))
+    rotated_png = cv2.imencode('.png',rotated)
+    data_encode = np.array(rotated_png[1])
+    # gaussian = cv2.GaussianBlur(rotated, (9, 9), 0)
+    # gaussian_png = cv2.imencode('.png',gaussian)
+    # data_encode = np.array(gaussian_png[1])
+    byte_encode = data_encode.tobytes()
+    b64out = base64.b64encode(byte_encode)
+    return b64out
+
+def mint_erc721_with_uri_from_image(msg_sender,erc721_to_mint,mint_header,b64out):
+    h = SHA256.new()
+    pngout = base64.decodebytes(b64out)
+    h = SHA256.new()
+    h.update(pngout)
+    sha256_code = "12"
+    size = hex(h.digest_size)[2:]
+    digest = h.hexdigest()
+    combined = f"{sha256_code}{size}{digest}"
+    multihash = base58.b58encode(bytes.fromhex(combined))
+    tokenURI = multihash.decode('utf-8') # it is not the ipfs unixfs 'file' hash
+
+    mint_erc721_with_string(msg_sender,erc721_to_mint,mint_header,tokenURI)
+    
+def mint_erc721_with_string(msg_sender,erc721_to_mint,mint_header,string):
+    mint_header = clean_header(mint_header)
+    data = encode_abi(['address', 'string'], [msg_sender,string])
+    payload = f"0x{(mint_header+data).hex()}"
+    voucher = {"address": erc721_to_mint , "payload": payload}
+    logger.info(f"voucher {voucher}")
+    send_voucher(voucher)
+    
+    send_notice({"payload": str2hex(str(f"Emmited voucher to mint ERC721 {erc721_to_mint} with the content {string}"))})
+
+def mint_erc721_no_data(msg_sender,erc721_to_mint,mint_header):
+    mint_header = clean_header(mint_header)
+    data = encode_abi(['address'], [msg_sender])
+    payload = f"0x{(mint_header+data).hex()}"
+    voucher = {"address": erc721_to_mint , "payload": payload}
+    logger.info(f"voucher {voucher}")
+    send_voucher(voucher)
+    
+    send_notice({"payload": str2hex(str(f"Emmited voucher to mint ERC721 {erc721_to_mint}"))})
+
+def clean_header(mint_header):
+    if mint_header[:2] == "0x":
+        mint_header = mint_header[2:]
+    mint_header = bytes.fromhex(mint_header)
+    return mint_header
+
+###
+# handlers
 
 def handle_advance(request):
     data = request["data"]
@@ -91,27 +166,22 @@ def handle_advance(request):
         if payload == "exception":
             status = "reject"
             exception = {"payload": str2hex(str(payload))}
-            response = requests.post(rollup_server + "/exception", json=exception)
-            logger.info(f"/exception: Received response status {response.status_code} body {response.content}")
+            send_exception(exception)
             sys.exit(1)
         elif payload == "reject":
             status = "reject"
             report = {"payload": str2hex(str(payload))}
-            response = requests.post(rollup_server + "/report", json=report)
-            logger.info(f"/report: Received report status {response.status_code} body {response.content}")
+            send_report(report)
         elif payload == "report":
             report = {"payload": str2hex(str(payload))}
-            response = requests.post(rollup_server + "/report", json=report)
-            logger.info(f"/report: Received report status {response.status_code} body {response.content}")
+            send_report(report)
         elif payload[0:7] == "voucher":
             payload = f"{payload}"
             voucher = json.loads(payload[7:])
-            response = requests.post(rollup_server + "/voucher", json=voucher)
-            logger.info(f"/voucher: Received response status {response.status_code} body {response.content}")
+            send_voucher(voucher)
         elif payload == "notice":
             notice = {"payload": str2hex(str(payload))}
-            response = requests.post(rollup_server + "/notice", json=notice)
-            logger.info(f"/notice: Received extra notice status {response.status_code} body {response.content}")
+            send_notice(notice)
         else:
             try:
                 logger.info(f"Trying to decode json")
@@ -135,6 +205,17 @@ def handle_advance(request):
                     logger.info(f"Received array to sort ({json_data['array']})")
                     a = np.array(json_data["array"])
                     payload = f"{np.sort(a)}"
+                elif json_data.get("image"):
+                    b64out = process_image(json_data["image"].encode("utf-8"))
+                    payload = f"{b64out}"
+                    if json_data.get("erc721_to_mint") and json_data.get("selector"):
+                        mint_erc721_with_uri_from_image(data["metadata"]["msg_sender"],json_data["erc721_to_mint"],json_data["selector"],b64out)
+                elif json_data.get("erc721_to_mint") and json_data.get("selector"):
+                    logger.info(f"Received mint request to ({json_data['erc721_to_mint']})")
+                    if json_data.get("string"):
+                        mint_erc721_with_string(data["metadata"]["msg_sender"],json_data["erc721_to_mint"],json_data["selector"],json_data["string"])
+                    else:
+                        mint_erc721_no_data(data["metadata"]["msg_sender"],json_data["erc721_to_mint"],json_data["selector"])
                 else:
                     raise Exception('Not supported json operation')
             except Exception as e2:
@@ -145,49 +226,32 @@ def handle_advance(request):
     except Exception as e:
         try:
             logger.info(f"Trying to decode deposit")
-            payload = txHex(data["payload"])
-            if isinstance(payload, tuple):
-                handle_tx(data["metadata"]["msg_sender"],payload)
+            handle_tx(data["metadata"]["msg_sender"],data["payload"])
         except Exception as e2:
             status = "reject"
             msg = f"Error executing deposit: {e}"
+            # traceback.print_exc()
             logger.error(msg)
-            response = requests.post(rollup_server + "/report", json={"payload": str2hex(msg)})
-            logger.info(f"Received report status {response.status_code} body {response.content}")
-        
+            send_report({"payload": str2hex(msg)})
+
     if not payload:
         payload = data["payload"]
     else:
         payload = str2hex(str(payload))
     notice = {"payload": payload}
-    response = requests.post(rollup_server + "/notice", json=notice)
-    logger.info(f"/notice: Received notice status {response.status_code} body {response.content}")
+    send_notice(notice)
 
     logger.info(f"Payload is {payload}")
     return status
 
-def check_point_in_fence(fence, latitude, longitude):
-    # shapely
-    fence = json.loads(fence)
-    y = shape(fence)
-    x = Point(longitude, latitude)
-    return y.contains(x)
-
-def process_sql_statement(statement):
-    con = sqlite3.connect("data.db")
-    cur = con.cursor()
-    cur.execute(statement)
-    result = cur.fetchall()
-    con.commit()
-    con.close()
-    return result
-
-def handle_tx(sender,decoded):
-    input_header = decoded[0]
+def handle_tx(sender,payload):
+    binary = bytes.fromhex(payload[2:])
+    input_header = decode_abi(['bytes32'], binary)[0]
     logger.info(f"header {input_header}")
     voucher = None
 
     if input_header == ERC20_TRANSFER_HEADER:
+        decoded = decode_abi(['bytes32', 'address', 'address', 'uint256', 'bytes'], binary)
         logger.info(f"depositor: {decoded[1]}; erc20: {decoded[2]}; amount: {decoded[3]}; data: {decoded[4]}")
         withdraw_header = ERC20_WITHDRAWAL_HEADER[0:4]
         logger.info(f"withdraw_header() {withdraw_header}")
@@ -207,20 +271,22 @@ def handle_tx(sender,decoded):
         logger.info(f"voucher {voucher}")
 
     elif input_header == ERC721_TRANSFER_HEADER:
-        logger.info(f"depositor: {decoded[1]}; erc721: {decoded[2]}; nftid: {decoded[3]}; data: {decoded[4]}")
-        withdraw_header = ERC721_WITHDRAWAL_HEADER[0:4]
-        # (address tokenAddr, address payable receiver, uint256 tokenId) 
+        decoded = decode_abi(['bytes32', 'address', 'address', 'address', 'uint256', 'bytes'], binary)
+        logger.info(f"erc721: {decoded[1]}; caller: {decoded[2]}; prev owner: {decoded[3]}; nftid: {decoded[4]}; data: {decoded[5]}")
+        withdraw_header = ERC721_SAFETRANSFER_HEADER[0:4]
+        # (address sender, address payable receiver, uint256 nftId) 
         # data = encode_abi(['address', 'address', 'uint256'], [decoded[2],decoded[1],decoded[3]])
 
         # print(Web3.keccak(b"safeTransferFrom(address,address,uint256)")) -> will be called as [nft_address].transfer([address sender],[address receiver],[uint256 id])
-        data = encode_abi(['address', 'address', 'uint256'], [rollup_address,decoded[1],decoded[3]])
+        data = encode_abi(['address', 'address', 'uint256'], [rollup_address,decoded[2],decoded[4]])
 
         payload = f"0x{(withdraw_header+data).hex()}"
         logger.info(f"voucher_payload(hex) {payload}")
-        voucher = {"address": decoded[2] , "payload": payload}
+        voucher = {"address": decoded[1] , "payload": payload}
         logger.info(f"voucher {voucher}")
 
     elif input_header == ETHER_TRANSFER_HEADER:
+        decoded = decode_abi(['bytes32', 'address', 'uint256', 'bytes'], binary)
         logger.info(f"depositor: {decoded[1]}; amount: {decoded[2]}; data: {decoded[3]}")
         withdraw_header = ETHER_WITHDRAWAL_HEADER[0:4]
         # (address payable receiver, uint256 value) 
@@ -239,18 +305,14 @@ def handle_tx(sender,decoded):
         pass
 
     if voucher:
-        logger.info("Adding voucher")
-        response = requests.post(rollup_server + "/voucher", json=voucher)
-        logger.info(f"Received voucher status {response.status_code} body {response.content}")
-
+        send_voucher(voucher)
 
 def handle_inspect(request):
     data = request["data"]
     logger.info(f"Received inspect request {data}")
     logger.info("Adding report")
     report = {"payload": data["payload"]}
-    response = requests.post(rollup_server + "/report", json=report)
-    logger.info(f"Received report status {response.status_code}")
+    send_report(report)
     return "accept"
 
 handlers = {
@@ -259,7 +321,7 @@ handlers = {
 }
 
 finish = {"status": "accept"}
-rollup_address = "0xa37ae2b259d35af4abdde122ec90b204323ed304"# None
+rollup_address = "0xa37ae2b259d35af4abdde122ec90b204323ed304" # None
 
 while True:
     logger.info("Sending finish")

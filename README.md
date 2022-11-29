@@ -53,7 +53,20 @@ The DApp works as an echo dapp, but it answers some special commands such as:
     You can send arrays to be ordered with numpy - e.g.: 
     
     ```{"array":[3,5,1,4,2]}```
-3. strings (it performs some operations depending on the string: reject, report, exception, ...)
+
+    You can send mint nfts - e.g.: 
+    
+    ```{"erc721_to_mint":"0xd8b9...3fa8","selector":"0x755edd17"}```
+    ```{"erc721_to_mint":"0xd914...9138","selector":"0xd0def521","string":"nftTest"}```
+
+    You can send images (cinverted to base64) to be processed with opencv (and mint nft with file multihash) - e.g.: 
+    
+    ```{"image":"iVBORw0...uQmCC"}```
+    ```{"image":"iVBORw0...uQmCC","erc721_to_mint":"0xd914...9138","selector":"0xd0def521"}```
+
+    Using standard linux tools youcan convert an image to base64 with ```base64 img.png``` and convert back to with ```base64 -d <<< $(cat img_processed.png.b64) > img_processed.png```
+
+3. strings (it performs some operations depending on the string: report, reject, exception, ...)
 
 
 ## Deploying to a testnet
@@ -150,13 +163,14 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-co
 ```
 
 This DApp's back-end is written in Python, so to run it in your machine you need to have `python3` installed.
+The backend uses hsapely library, so you should install libgeos-c on your host (refer to [geos](https://libgeos.org/usage/install/)).
 
 In order to start the back-end, run the following commands in a dedicated terminal:
 
 ```shell
-python3 -m venv .env
-. .env/bin/activate
-pip install -r requirements.txt
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements-host.txt
 ROLLUP_HTTP_SERVER_URL="http://127.0.0.1:5004" python3 echo-plus.py
 ```
 
