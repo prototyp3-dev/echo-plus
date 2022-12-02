@@ -17,7 +17,7 @@ export LD_LIBRARY_PATH=/lib
 # Add geos lib paths 
 export LD_LIBRARY_PATH=/mnt/dapp/3rdparty/geos/lib:$LD_LIBRARY_PATH
 
-# Add geos lib paths 
+# Add opencv lib paths 
 export LD_LIBRARY_PATH=/mnt/dapp/3rdparty/opencv/lib/:$LD_LIBRARY_PATH
 
 python3 /mnt/dapp/echo-plus.py
