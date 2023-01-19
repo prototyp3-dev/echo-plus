@@ -14,7 +14,7 @@ Please refer to the [rollups-examples requirements](https://github.com/cartesi/r
 To build the application, run the following command:
 
 ```shell
-docker buildx bake -f docker-bake.hcl -f docker-bake.override.hcl --load
+docker buildx bake --load
 ```
 
 ## Running
@@ -22,13 +22,13 @@ docker buildx bake -f docker-bake.hcl -f docker-bake.override.hcl --load
 To start the application, execute the following command:
 
 ```shell
-docker compose -f docker-compose.yml -f docker-compose.override.yml up
+docker compose up
 ```
 
 The application can afterwards be shut down with the following command:
 
 ```shell
-docker compose -f docker-compose.yml -f docker-compose.override.yml down -v
+docker compose down -v
 ```
 
 ## Interacting with the application
@@ -76,7 +76,7 @@ Deploying the application to a blockchain requires creating a smart contract on 
 The first step is to build the DApp's back-end machine, which will produce a hash that serves as a unique identifier.
 
 ```shell
-docker buildx bake -f docker-bake.hcl -f docker-bake.override.hcl machine --load
+docker buildx bake machine --load
 ```
 
 Once the machine docker image is ready, we can use it to deploy a corresponding Rollups smart contract. This requires you to define a few environment variables to specify which network you are deploying to, which account to use, and which RPC gateway to use when submitting the deploy transaction.
@@ -101,7 +101,7 @@ With that in place, you can submit a deploy transaction to the Cartesi DApp Fact
 DAPP_NAME=echo-plus docker compose -f ./deploy-testnet.yml up
 ```
 
-This will create a file at `./deployments/<network>/echo-plus.address` with the deployed contract's address.
+This will create a file at `./deployments/<network>/echo-plus.json` with the deployed contract's address.
 Once the command finishes, it is advisable to stop the docker compose and remove the volumes created when executing it.
 
 ```shell
@@ -139,7 +139,7 @@ export RPC_URL=<https://your.rpc.gateway>
 Then, inputs can be sent by specifying the DApp contract's address, as follows:
 
 ```shell
-yarn start input send --payload "Hello there" --addressFile path/to/echo-plus/deployments/<network>/echo-plus.address
+yarn start input send --payload "Hello there" --addressFile path/to/echo-plus/deployments/<network>/echo-plus.json
 ```
 
 Resulting notices can then be retrieved by querying the local Cartesi Node, as before:
