@@ -26,6 +26,7 @@ import cv2
 from Cryptodome.Hash import SHA256
 import base64
 import base58
+from protobuf import unixfs_pb2, merkle_dag_pb2
 
 # b'Y\xda*\x98N\x16Z\xe4H|\x99\xe5\xd1\xdc\xa7\xe0L\x8a\x990\x1b\xe6\xbc\t)2\xcb]\x7f\x03Cx'
 ERC20_TRANSFER_HEADER = b'Y\xda*\x98N\x16Z\xe4H|\x99\xe5\xd1\xdc\xa7\xe0L\x8a\x990\x1b\xe6\xbc\t)2\xcb]\x7f\x03Cx'
@@ -112,10 +113,20 @@ def process_image(image):
     return b64out
 
 def mint_erc721_with_uri_from_image(msg_sender,erc721_to_mint,mint_header,b64out):
-    h = SHA256.new()
     pngout = base64.decodebytes(b64out)
+
+    unixf = unixfs_pb2.Data()
+    unixf.Type = 2 # file
+    unixf.Data = pngout
+    unixf.filesize = len(unixf.Data)
+
+    mdag = merkle_dag_pb2.MerkleNode()
+    mdag.Data = unixf.SerializeToString()
+
+    data = mdag.SerializeToString()
+
     h = SHA256.new()
-    h.update(pngout)
+    h.update(data)
     sha256_code = "12"
     size = hex(h.digest_size)[2:]
     digest = h.hexdigest()
@@ -198,7 +209,7 @@ def handle_advance(request):
                     payload = f"{check_point_in_fence(fence, latitude, longitude)}"
                 # check sql
                 elif json_data.get("sql"):
-                    sql_statement = json_data["sql_statement"]
+                    sql_statement = json_data["sql"]
                     logger.info(f"Received sql statement ({sql_statement})")
                     payload = f"{process_sql_statement(sql_statement)}"
                 elif json_data.get("array"):

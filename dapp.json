@@ -1,6 +1,6 @@
 {
   "fs": {
-    "files": ["entrypoint.sh","pythonentry.sh","initlibs.sh","echo-plus.py",".crossenv","3rdparty"],
+    "files": ["entrypoint.sh","pythonentry.sh","initlibs.sh","echo-plus.py",".crossenv","3rdparty","protobuf/merkle_dag_pb2.py","protobuf/unixfs_pb2.py"],
     "size": 524288
   }
 }
