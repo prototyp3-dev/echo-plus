@@ -14,7 +14,7 @@ Please refer to the [rollups-examples requirements](https://github.com/cartesi/r
 To build the application, run the following command:
 
 ```shell
-docker buildx bake --load
+docker buildx bake -f docker-bake.hcl -f docker-bake.override.hcl --load
 ```
 
 ## Running
@@ -76,7 +76,7 @@ Deploying the application to a blockchain requires creating a smart contract on 
 The first step is to build the DApp's back-end machine, which will produce a hash that serves as a unique identifier.
 
 ```shell
-docker buildx bake machine --load
+docker buildx bake -f docker-bake.hcl -f docker-bake.override.hcl machine --load
 ```
 
 Once the machine docker image is ready, we can use it to deploy a corresponding Rollups smart contract. This requires you to define a few environment variables to specify which network you are deploying to, which account to use, and which RPC gateway to use when submitting the deploy transaction.
@@ -168,6 +168,7 @@ The backend uses hsapely library, so you should install libgeos-c on your host (
 In order to start the back-end, run the following commands in a dedicated terminal:
 
 ```shell
+cd dapp
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements-host.txt

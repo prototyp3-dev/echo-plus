@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright 2022 Cartesi Pte. Ltd.
 #
 # SPDX-License-Identifier: Apache-2.0
@@ -13,6 +13,11 @@
 
 set -e
 
-sh /mnt/dapp/initlibs.sh
+CONFIG_DEFAULT=$1
+CONFIG_DAPP=$2
+FS_DIR=$3
+FILES=$(mktemp)
 
-PYTHONPATH=/mnt/dapp/.crossenv/cross/lib/python3.10/site-packages rollup-init /mnt/dapp/pythonentry.sh
+# copy filesystem files to tmp dir
+jq -rs '.[0] * .[1] | .fs.files[]?' $CONFIG_DEFAULT $CONFIG_DAPP > $FILES
+rsync -r --files-from=$FILES . $FS_DIR

@@ -26,7 +26,7 @@ import cv2
 from Cryptodome.Hash import SHA256
 import base64
 import base58
-from protobuf import unixfs_pb2, merkle_dag_pb2
+from protobuf_models import unixfs_pb2, merkle_dag_pb2
 
 # b'Y\xda*\x98N\x16Z\xe4H|\x99\xe5\xd1\xdc\xa7\xe0L\x8a\x990\x1b\xe6\xbc\t)2\xcb]\x7f\x03Cx'
 ERC20_TRANSFER_HEADER = b'Y\xda*\x98N\x16Z\xe4H|\x99\xe5\xd1\xdc\xa7\xe0L\x8a\x990\x1b\xe6\xbc\t)2\xcb]\x7f\x03Cx'

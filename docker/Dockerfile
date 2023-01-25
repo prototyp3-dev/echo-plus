@@ -2,7 +2,7 @@
 # layers for caching and versioning
 FROM cartesi/toolchain:0.12.0 as toolchain
 FROM cartesi/rootfs:0.15.0 as rootfs
-FROM cartesi/server-manager:0.5.0 as server-manager
+FROM cartesicorp/server-manager:0.5.0-rv64gc-test as server-manager
 
 FROM rootfs as toolchain-python
 
@@ -75,8 +75,8 @@ RUN cat dependencies | xargs wget
 RUN sha1sum -c shasumfile
 
 
-# stage to build the dapp ext2 filesystem
-FROM toolchain as dapp-fs-build
+# stage to add project files
+FROM dapp-files-build as dapp-project-files-build
 
 # install jq
 RUN <<EOF
@@ -85,13 +85,34 @@ DEBIAN_FRONTEND="noninteractive" apt-get install -y jq
 rm -rf /var/lib/apt/lists/*
 EOF
 
-WORKDIR /opt/cartesi/dapp
-COPY --from=dapp-build /opt/cartesi/dapp .
-COPY build-dapp-fs.sh /usr/local/bin
+COPY copy-dapp-files.sh /usr/local/bin
 COPY default.json /opt/cartesi/
 
-RUN build-dapp-fs.sh /opt/cartesi/default.json dapp.json dapp.ext2
+RUN copy-dapp-files.sh /opt/cartesi/default.json dapp.json /opt/dapp/
 
+
+# stage to add dapp files and cartesi boot sys
+FROM dapp-build as dapp-fs-build
+
+# clean image
+RUN apt -y autoremove && apt clean 
+RUN rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/dapp/
+
+COPY --from=dapp-project-files-build /opt/dapp .
+
+# TODO change to from dependecies file and add here
+ADD bootfs.tar.gz /
+
+
+# stage to build the dapp ext2 filesystem
+FROM dapp-project-files-build as dapp-fsext-build
+
+COPY img-pack.sh /usr/local/bin
+COPY --from=dapp-fs-build / dappfs
+
+RUN img-pack.sh /opt/cartesi/default.json dapp.json dappfs dapp.ext2
 
 # stage to build the initial cartesi machine
 FROM server-manager as machine-server
@@ -99,7 +120,7 @@ FROM server-manager as machine-server
 WORKDIR /opt/cartesi/dapp
 
 # copy dapp ext2 from dapp stage
-COPY --from=dapp-fs-build /opt/cartesi/dapp/dapp.ext2 .
+COPY --from=dapp-fsext-build /opt/cartesi/dapp/dapp.ext2 .
 
 # copy rootfs, linux, rom
 COPY --from=machine-core /opt/cartesi/share/* .
@@ -118,7 +139,7 @@ FROM server-manager as machine-console
 WORKDIR /opt/cartesi/dapp
 
 # copy dapp ext2 from stage 1
-COPY --from=dapp-fs-build /opt/cartesi/dapp/dapp.ext2 .
+COPY --from=dapp-fsext-build /opt/cartesi/dapp/dapp.ext2 .
 
 # copy rootfs, kernel, rom
 COPY --from=machine-core /opt/cartesi/share/* .

@@ -1,6 +1,6 @@
 
 group "default" {
-  targets = ["dapp", "server", "console"]
+  targets = ["server", "console"]
 }
 
 # crossenv toolchain for python dapps
@@ -15,6 +15,17 @@ target "fs" {
   target  = "dapp-fs-build"
   contexts = {
     dapp-build = "target:dapp"
+    dapp-files-build = "target:dapp-files"
+  }
+  output = ["dapp.tar,type=tar"]
+}
+
+target "fsext" {
+  context = "./docker"
+  target  = "dapp-fsext-build"
+  contexts = {
+    dapp-build = "target:dapp"
+    dapp-files-build = "target:dapp-files"
   }
 }
 
@@ -23,6 +34,7 @@ target "server" {
   target  = "machine-server"
   contexts = {
     dapp-build = "target:dapp"
+    dapp-files-build = "target:dapp-files"
   }
 }
 
@@ -31,6 +43,7 @@ target "console" {
   target  = "machine-console"
   contexts = {
     dapp-build = "target:dapp"
+    dapp-files-build = "target:dapp-files"
   }
 }
 
@@ -39,5 +52,6 @@ target "machine" {
   target  = "machine-standalone"
   contexts = {
     dapp-build = "target:dapp"
+    dapp-files-build = "target:dapp-files"
   }
 }

@@ -1,7 +1,7 @@
 {
   "fs": {
     "files": ["entrypoint.sh"],
-    "size": 4096
+    "sizemultiplier": 1.2
   },
   "machine": {
     "entrypoint": "entrypoint.sh",

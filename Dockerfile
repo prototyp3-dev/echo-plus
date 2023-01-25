@@ -1,26 +1,18 @@
-# syntax=docker.io/docker/dockerfile:1.4
-# FROM cartesi/toolchain:0.12.0 as dapp-build
-FROM toolchain-python as dapp-build
+# dapp dependencies stage
+FROM ubuntu as dapp-build
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TZ=Etc/UTC
+
+RUN apt update && apt install -y python3 python3-opencv python3-shapely python3-requests python3-base58 python3-protobuf python3-pycryptodome python3-pip
+
+RUN pip3 install eth_abi 
+
+RUN apt remove -y python3-pip
+
+# dapp files stage
+FROM cartesi/toolchain:0.12.0 as dapp-files-build
 
 WORKDIR /opt/cartesi/dapp
 
-ENV SOURCE_DATE_EPOCH=1640995200
-
-SHELL ["/bin/bash", "-c"]
-
-RUN apt update && apt install -y cmake
-
-COPY . .
-
-RUN source compiler-envs.sh && cd 3rdparty && make geos
-
-RUN <<EOF 
-pip3.10 install crossenv 
-python3.10 -m crossenv /mnt/python-dapp/bin/python3 .crossenv 
-. ./.crossenv/bin/activate 
-pip install -r requirements.txt 
-EOF
-
-RUN . ./.crossenv/bin/activate && source compiler-envs.sh && cd 3rdparty && make opencv
-
-RUN find .crossenv -name __pycache__ -type d -prune -exec rm -rf {} \;
+COPY dapp .
