@@ -94,10 +94,6 @@ RUN copy-dapp-files.sh /opt/cartesi/default.json dapp.json /opt/dapp/
 # stage to add dapp files and cartesi boot sys
 FROM dapp-build as dapp-fs-build
 
-# clean image
-RUN apt -y autoremove && apt clean 
-RUN rm -rf /var/lib/apt/lists/*
-
 WORKDIR /opt/dapp/
 
 COPY --from=dapp-project-files-build /opt/dapp .

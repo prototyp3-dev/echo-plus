@@ -29,13 +29,12 @@ FS_SIZE=$(jq -rs --arg bs "$blocksize" '.[0] * .[1] | .fs.sizemultiplier // $bs'
 # genext2fs -f -i 512 -b $FS_SIZE -a $TAR $EXT2
 
 bytes=$(du -bd0 $FS_DIR | cut -f1)
-blocks=$(echo "1.2 * ($bytes + $blocksize - 1) / $blocksize" | bc)
+blocks=$(echo "$FS_SIZE * ($bytes + $blocksize - 1) / $blocksize" | bc)
 
 genext2fs -fz \
     -B   $blocksize \
 	-b   $blocks \
 	-i   $blocksize \
-	-L   root \
 	-a   $TAR \
 	$EXT2
 

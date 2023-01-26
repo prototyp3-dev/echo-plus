@@ -13,4 +13,4 @@
 
 set -e
 
-rollup-init python3 /mnt/dapp/echo-plus.py
+rollup-init python3 /opt/dapp/echo-plus.py

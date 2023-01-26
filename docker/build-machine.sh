@@ -26,4 +26,4 @@ cartesi-machine \
     --store=$MACHINE_DIR \
     -- "cd /mnt/dapp; \
         ROLLUP_HTTP_SERVER_URL=\"http://127.0.0.1:$ROLLUP_HTTP_SERVER_PORT\" \
-        ./entrypoint.sh"
+        /opt/dapp/entrypoint.sh"

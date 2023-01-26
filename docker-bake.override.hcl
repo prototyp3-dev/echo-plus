@@ -1,5 +1,5 @@
 
-target "dapp" {
+target "dapp-dependencies" {
   target  = "dapp-build"
 }
 
