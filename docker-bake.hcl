@@ -26,6 +26,7 @@ target "fsext" {
     dapp-build = "target:dapp-dependencies"
     dapp-files-build = "target:dapp-files"
   }
+  tags    = ["fsext"]
 }
 
 target "server" {

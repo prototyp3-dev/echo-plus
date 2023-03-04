@@ -22,13 +22,13 @@ docker buildx bake -f docker-bake.hcl -f docker-bake.override.hcl --load
 To start the application, execute the following command:
 
 ```shell
-docker compose up
+docker compose -f docker-compose.yml -f docker-compose.override.yml up
 ```
 
 The application can afterwards be shut down with the following command:
 
 ```shell
-docker compose down -v
+docker compose -f docker-compose.yml -f docker-compose.override.yml down -v
 ```
 
 ## Interacting with the application

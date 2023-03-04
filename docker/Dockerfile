@@ -71,7 +71,7 @@ WORKDIR /opt/cartesi/share
 # download dependencies
 COPY dependencies .
 COPY shasumfile .
-RUN cat dependencies | xargs wget
+RUN while read DEP; do wget -O $DEP; done < dependencies
 RUN sha1sum -c shasumfile
 
 
@@ -98,15 +98,25 @@ WORKDIR /opt/dapp/
 
 COPY --from=dapp-project-files-build /opt/dapp .
 
-# TODO change to from dependecies file and add here
-ADD bootfs.tar.gz /
+# add the required 'dapp' user
+RUN useradd --create-home --user-group --uid 1000 dapp
+RUN chown -R 1000:1000 /opt/dapp
 
+# install busybox
+RUN apt-get update && apt-get install -y --no-install-recommends busybox-static
+RUN apt -y autoremove && apt clean 
+RUN rm -rf /var/lib/apt/lists/*
 
 # stage to build the dapp ext2 filesystem
 FROM dapp-project-files-build as dapp-fsext-build
 
 COPY img-pack.sh /usr/local/bin
 COPY --from=dapp-fs-build / dappfs
+
+RUN rm -rf dappfs/proc/* dappfs/sys/* dappfs/dev/*
+
+COPY --from=machine-core /opt/cartesi/share/machine-emulator-tools.tar.gz /tmp/
+RUN cd dappfs && tar -xvf /tmp/machine-emulator-tools.tar.gz ./
 
 RUN img-pack.sh /opt/cartesi/default.json dapp.json dappfs dapp.ext2
 
