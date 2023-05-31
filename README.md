@@ -14,7 +14,7 @@ Please refer to the [rollups-examples requirements](https://github.com/cartesi/r
 To build the application, run the following command:
 
 ```shell
-docker buildx bake --load
+docker buildx bake -f docker-bake.hcl -f docker-bake.override.hcl --load
 ```
 
 ## Running
@@ -22,13 +22,13 @@ docker buildx bake --load
 To start the application, execute the following command:
 
 ```shell
-docker compose -f docker-bake.hcl -f docker-bake.override.hcl up
+docker compose -f docker-compose.yml -f docker-compose.override.yml up
 ```
 
 The application can afterwards be shut down with the following command:
 
 ```shell
-docker compose -f docker-bake.hcl -f docker-bake.override.hcl down -v
+docker compose -f docker-compose.yml -f docker-compose.override.yml down -v
 ```
 
 ## Interacting with the application
