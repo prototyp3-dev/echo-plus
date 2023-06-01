@@ -1,6 +1,0 @@
-{
-  "fs": {
-    "files": ["entrypoint.sh","echo-plus.py","protobuf_models/merkle_dag_pb2.py","protobuf_models/unixfs_pb2.py"],
-    "sizemultiplier": 1.5
-  }
-}

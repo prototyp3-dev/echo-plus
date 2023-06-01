@@ -24,6 +24,6 @@ cartesi-machine \
     --ram-image=linux.bin \
     --rom-image=rom.bin \
     --store=$MACHINE_DIR \
-    -- "cd /opt/dapp; \
+    -- "cd /opt/cartesi/dapp; \
         ROLLUP_HTTP_SERVER_URL=\"http://127.0.0.1:$ROLLUP_HTTP_SERVER_PORT\" \
         ./entrypoint.sh"

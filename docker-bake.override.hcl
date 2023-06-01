@@ -1,10 +1,5 @@
 
-target "dapp-dependencies" {
-  target  = "dapp-build"
-}
-
-target "dapp-files" {
-  target  = "dapp-files-build"
+target "dapp" {
 }
 
 variable "TAG" {
