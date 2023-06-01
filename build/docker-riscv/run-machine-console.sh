@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright 2022 Cartesi Pte. Ltd.
 #
 # SPDX-License-Identifier: Apache-2.0
@@ -11,13 +11,28 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-# Add lib paths (to work with geos and numpy)
-export LD_LIBRARY_PATH=/lib 
+# note: to run as root, call this script with argument `--run-as-root'`
 
-# Add geos lib paths 
-export LD_LIBRARY_PATH=/mnt/dapp/3rdparty/geos/lib:$LD_LIBRARY_PATH
+unset CM_OPTS
+while [ $# -gt 0 ]; do
+    arg="$1"
+    shift 1
 
-# Add opencv lib paths 
-export LD_LIBRARY_PATH=/mnt/dapp/3rdparty/opencv/lib/:$LD_LIBRARY_PATH
+    case "$arg" in
+        --run-as-root)
+            CM_OPTS+=--append-rom-bootargs='single=yes'
+            ;;
+        *)
+            echo invalid option "$arg"
+            ;;
+    esac
+done
 
-python3 /mnt/dapp/echo-plus.py
+cartesi-machine \
+    --ram-length=128Mi \
+    --rollup \
+    --flash-drive=label:root,filename:dapp.ext2 \
+    --ram-image=linux.bin \
+    --rom-image=rom.bin \
+    -i $CM_OPTS \
+    -- "/bin/sh"
