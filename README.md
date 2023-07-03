@@ -63,7 +63,7 @@ The DApp works as an echo dapp, but it answers some special commands such as:
     ```{"erc721_to_mint":"0xd8b9...3fa8","selector":"0x755edd17"}```
     ```{"erc721_to_mint":"0xd914...9138","selector":"0xd0def521","string":"nftTest"}```
 
-    You can send images (cinverted to base64) to be processed with opencv (and mint nft with file multihash) - e.g.: 
+    You can send images (converted to base64) to be processed with opencv (and mint nft with file multihash) - e.g.: 
     
     ```{"image":"iVBORw0...uQmCC"}```
     ```{"image":"iVBORw0...uQmCC","erc721_to_mint":"0xd914...9138","selector":"0xd0def521"}```
