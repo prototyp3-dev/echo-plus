@@ -5,9 +5,7 @@ Cartesi Rollups version: 1.0.x
 ```
 
 echo-plus is a customized DApp written in Python, which originally resembles the one provided by the sample [Echo Python DApp](https://github.com/cartesi/rollups-examples/tree/main/echo-python).
-Contrary to that example, this DApp does not use shared resources from the `rollups-examples` main directory, and as such the commands for building, running and deploying it are slightly different.
-
-The documentation below reflects the original application code, and should also be used as a basis for documenting any DApp created with this mechanism.
+Contrary to that example, this DApp uses sunodo to build and run, and as such the commands for building, and running are different.
 
 ## Requirements
 
@@ -15,6 +13,7 @@ This project works with [sunodo](https://github.com/sunodo/sunodo), so run it yo
 
 ```shell
 npm install -g @sunodo/cli
+alias sunodo="npx @sunodo/cli"
 ```
 
 ## Building
